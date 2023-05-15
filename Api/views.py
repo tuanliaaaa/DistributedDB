@@ -98,6 +98,10 @@ class EmployeeByID(APIView):
         else:
             return Response(results,status=200)
     def delete(self,request,employeeID):
+        sql_query1="DELETE FROM Invoices WHERE employee_id = '"+employeeID+"'"
+        results1 = delete_raw_sql(sql_query1)
+        if 'message' in results1:
+            return Response(results1,status=400)
         sql_query="DELETE FROM Employees WHERE employee_id = '"+employeeID+"'"
         results = delete_raw_sql(sql_query)
         if 'message' in results:
