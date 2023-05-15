@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css"
+	integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm"
+	crossorigin="anonymous">
+    <link rel="stylesheet" href="/static/css/DashBoard.css">
+    <title>Document</title>
+</head>
+<body>
+    <div id="header">
+      <button class="btn btn-success" onclick="GetAllEmployee()">Employee</button>
+      <button class="btn btn-success" onclick="GetTop10Invoices()">Invoices</button>
+      <button class="btn btn-success" onclick="AddEmployee()">Add Employee</button>
+    </div>
+    <div id="container">
+    
+        
+    </div>
+</body>
+<script>
+  GetAllEmployee()
+  function GetAllEmployee(){
+    var xhr = new XMLHttpRequest();
+    xhr.onload = function() 
+    {
+        if (xhr.status === 200) {
+            var response = JSON.parse(xhr.responseText);
+            var tableHtml='<table id="tableAll" class="table table-striped table-bordered"><thead class="table-dark"><tr><th>id</th><th>Name</th><th>Phone</th><th>Email</th><th>Action</th></tr></thead><tbody>';
+            for(var i=0;i<response.length;i++){
+              tableHtml+='<tr><td>'+response[i].employee_id+'</td><td>'+response[i].employee_name+'</td><td>'+response[i].phone_number+'</td><td>'+response[i].email+'</td><td> <button class="btn btn-warning Edit">Edit</button> <button class="btn btn-danger Delete" >Delete</button></td></tr>';
+            }
+            tableHtml+= '</tbody></table>';
+           document.getElementById("container").innerHTML=tableHtml;
+           var editButtons = document.querySelectorAll(".Edit");
+
+          editButtons.forEach(function(button) {
+              button.addEventListener("click", Edit);
+            });
+            var deleteButtons = document.querySelectorAll(".Delete");
+
+            deleteButtons.forEach(function(button) {
+              button.addEventListener("click", Delete);
+            });
+            
+        } else if (xhr.readyState === 400) {
+            alert(response.message)
+        }
+    };
+    xhr.open('GET', '/ApiV1/ListUser', true);
+    xhr.send();
+  }
+  function GetTop10Invoices(){
+    
+    var xhr = new XMLHttpRequest();
+    
+  
+    xhr.onload = function() 
+    {
+        if (xhr.status === 200) {
+            var response = JSON.parse(xhr.responseText);
+            var tableHtml='<table id="tableAll" class="table table-striped table-bordered"><thead class="table-dark"><tr><th>id</th><th>Name</th><th>Phone</th><th>Sum Quantity</th></tr></thead><tbody>';
+            for(var i=0;i<response.length;i++){
+              tableHtml+='<tr><td>'+response[i].employee_id+'</td><td>'+response[i].employee_name+'</td><td>'+response[i].phone_number+'</td><td>'+response[i].quantity+'</td></tr>';
+            }
+            tableHtml+= '</tbody></table>';
+           document.getElementById("container").innerHTML=tableHtml;
+            
+        } else if (xhr.readyState === 400) {
+            alert(response.message)
+        }
+    };
+    xhr.open('GET', '/ApiV1/ListInvoice', true);
+    xhr.send();
+  }
+function Edit() {
+  var row = this.parentNode.parentNode;
+  var cells = row.getElementsByTagName("td");
+
+  for (var i = 1; i < cells.length - 1; i++) {
+      var cell = cells[i];
+      var inputHtml='<input type="text" value="'+cell.innerHTML+'" >';
+      cell.innerHTML=inputHtml;
+      
+  }
+  var a=this.parentNode;
+  this.parentNode.innerHTML='<button class="btn btn-success Save">Save</button>';
+  a.querySelector('.Save').addEventListener("click",Save);
+  
+}
+function Delete(e){
+  const xhr = new XMLHttpRequest();
+  var inputTd=e.target.parentNode.parentNode.getElementsByTagName("td");
+  xhr.onload = function() {
+      if ( xhr.status === 204) {
+      
+        
+        GetAllEmployee();
+      }else{
+        const response = JSON.parse(xhr.responseText);
+        alert(response.message)
+      }
+    };
+
+  xhr.open('DELETE', '/ApiV1/EmployeeByID/'+inputTd[0].innerHTML, true);
+  xhr.setRequestHeader('Content-type', 'application/json');
+  xhr.send();
+  
+}
+function Save(e){
+  const xhr = new XMLHttpRequest();
+  var inputTd=e.target.parentNode.parentNode.getElementsByTagName("td");
+  
+  const employee={
+    employee_name:inputTd[1].querySelector('input').value,
+    phone_number:inputTd[2].querySelector('input').value,
+    email:inputTd[3].querySelector('input').value
+  }
+  console.log(employee)
+  employeeJson =JSON.stringify(employee);
+  xhr.onload = function() {
+      if ( xhr.status === 200) {
+      
+        const response = JSON.parse(xhr.responseText);
+        GetAllEmployee();
+      }else{
+        const response = JSON.parse(xhr.responseText);
+        alert(response.message)
+      }
+    };
+
+  xhr.open('PATCH', '/ApiV1/EmployeeByID/'+inputTd[0].innerHTML, true);
+  xhr.setRequestHeader('Content-type', 'application/json');
+  xhr.send(employeeJson);
+
+
+}
+function AddEmployee(){
+  var tableHtml='<table id="tableAll" class="table table-striped table-bordered"><thead class="table-dark"><tr><th>id</th><th>Name</th><th>Phone</th><th>Branch</th><th>Email</th><th></th></tr></thead><tbody>';   
+        tableHtml+='<tr><td> <input type="text" id="employee_id" ></td><td> <input type="text" id="employee_name" ></td><td> <input type="text" id="phone_number" ></td><td> <input type="text" id="branch_id" ></td><td><input type="text" id="email" ></td><td><button class="btn btn-success SaveEmployee" onclick="SaveNewEmployee()">Save Employee</button></td></tr>';
+      tableHtml+= '</tbody></table>';
+      document.getElementById("container").innerHTML=tableHtml;
+}
+function SaveNewEmployee(){
+  const xhr = new XMLHttpRequest();
+  
+  const employee={
+    employee_id:document.getElementById('employee_id').value,
+    employee_name:document.getElementById('employee_name').value,
+    phone_number:document.getElementById('phone_number').value,
+    email:document.getElementById('email').value,
+    branch_id:document.getElementById('branch_id').value
+  }
+  console.log(employee)
+  employeeJson =JSON.stringify(employee);
+  xhr.onload = function() {
+      if ( xhr.status === 201) {
+      
+        const response = JSON.parse(xhr.responseText);
+        GetAllEmployee();
+      }else{
+        const response = JSON.parse(xhr.responseText);
+        alert(response.message)
+      }
+    };
+
+  xhr.open('POST', '/ApiV1/ListUser', true);
+  xhr.setRequestHeader('Content-type', 'application/json');
+  xhr.send(employeeJson);
+}
+</script>
+</html>
